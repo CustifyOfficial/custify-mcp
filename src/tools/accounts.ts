@@ -65,7 +65,7 @@ export function registerAccountTools(server: McpServer, client: CustifyClient): 
           { toolName: 'list_accounts', toolCategory: 'accounts' }
         );
 
-        const companies = result.data || result.items || [];
+        const companies = result.companies || result.data || result.items || [];
         const formatted = companies.map((c) => ({
           id: c.id,
           name: c.name,
@@ -146,7 +146,7 @@ export function registerAccountTools(server: McpServer, client: CustifyClient): 
           { toolName: 'search_accounts', toolCategory: 'accounts' }
         );
 
-        const companies = result.data || result.items || [];
+        const companies = result.companies || result.data || result.items || [];
         const formatted = companies.map((c) => ({
           id: c.id,
           name: c.name,

@@ -24,7 +24,7 @@ export function registerContactTools(server: McpServer, client: CustifyClient): 
           { toolName: 'get_contacts', toolCategory: 'contacts' }
         );
 
-        const contacts = result.data || result.items || [];
+        const contacts = result.people || result.data || result.items || [];
         const formatted = contacts.map((c) => ({
           id: c.id,
           email: c.email ?? null,

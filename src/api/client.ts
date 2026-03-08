@@ -280,7 +280,7 @@ export class CustifyClient {
   // Actions
 
   async createNote(
-    params: { entity: string; entityModel: string; content: string; subject?: string },
+    params: { entity: string; entityModel: string; text: string; subject?: string },
     toolMeta?: ToolMeta
   ): Promise<Note> {
     return this.request<Note>('POST', '/note', {
@@ -332,8 +332,8 @@ export class CustifyClient {
     data: Record<string, unknown>,
     toolMeta?: ToolMeta
   ): Promise<Company> {
-    return this.request<Company>('PUT', `/company/${encodeURIComponent(companyId)}`, {
-      body: data,
+    return this.request<Company>('POST', '/company', {
+      body: { id: companyId, ...data },
       toolName: toolMeta?.toolName,
       toolCategory: toolMeta?.toolCategory,
     });
@@ -344,8 +344,8 @@ export class CustifyClient {
     data: Record<string, unknown>,
     toolMeta?: ToolMeta
   ): Promise<Contact> {
-    return this.request<Contact>('PUT', `/customer/${encodeURIComponent(customerId)}`, {
-      body: data,
+    return this.request<Contact>('POST', '/customer', {
+      body: { id: customerId, ...data },
       toolName: toolMeta?.toolName,
       toolCategory: toolMeta?.toolCategory,
     });

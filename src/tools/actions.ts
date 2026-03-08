@@ -18,7 +18,7 @@ export function registerActionTools(server: McpServer, client: CustifyClient): v
           {
             entity: params.account_id,
             entityModel: 'Company',
-            content: params.body,
+            text: params.body,
             subject: params.subject,
           },
           { toolName: 'create_note', toolCategory: 'actions' }
@@ -111,7 +111,7 @@ export function registerActionTools(server: McpServer, client: CustifyClient): v
   // run_playbook
   server.tool(
     'run_playbook',
-    'Trigger a Custify playbook on a specific account.',
+    'Trigger a manually-started Custify playbook on a specific account. Only playbooks with trigger type "manually started" can be triggered via the API; segment-based and event-based playbooks run automatically and cannot be triggered this way.',
     {
       playbook_id: z.string().describe('The Custify playbook ID'),
       account_id: z.string().describe('The Custify company/account ID to run the playbook on'),

@@ -8,7 +8,7 @@ export function registerAlertTools(server: McpServer, client: CustifyClient): vo
     'get_alerts',
     'Get alerts/signals from Custify, optionally filtered by account and status.',
     {
-      account_id: z.string().optional().describe('Filter alerts by Custify company/account ID'),
+      account_id: z.string().describe('The Custify company/account ID to get alerts for'),
       status: z.enum(['open', 'acknowledged']).optional().describe('Filter by alert status'),
       limit: z.number().min(1).max(100).default(25).optional().describe('Number of results (1-100, default 25)'),
       offset: z.number().min(0).default(0).optional().describe('Pagination offset (default 0)'),
@@ -33,13 +33,13 @@ export function registerAlertTools(server: McpServer, client: CustifyClient): vo
             page,
             itemsPerPage: limit,
             filters: filters.length > 0 ? filters : undefined,
-            customerType: params.account_id ? 'Company' : undefined,
+            customerType: 'Company',
             customerId: params.account_id,
           },
           { toolName: 'get_alerts', toolCategory: 'alerts' }
         );
 
-        const alerts = result.data || result.items || [];
+        const alerts = result.signals || result.data || result.items || [];
         const formatted = alerts.map((a) => ({
           id: a.id,
           type: a.type ?? null,

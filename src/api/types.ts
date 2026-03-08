@@ -172,10 +172,14 @@ export interface Task {
 export interface PaginatedResponse<T> {
   data?: T[];
   items?: T[];
+  companies?: T[];
+  signals?: T[];
+  people?: T[];
   total?: number;
   page?: number;
   pages?: number;
   itemsPerPage?: number;
+  hasMore?: boolean;
 }
 
 export interface ErrorResponse {
