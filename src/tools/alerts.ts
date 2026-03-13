@@ -6,7 +6,7 @@ export function registerAlertTools(server: McpServer, client: CustifyClient): vo
   // get_alerts
   server.tool(
     'get_alerts',
-    'Get alerts/signals from Custify, optionally filtered by account and status.',
+    'Get alerts/signals from Custify for a specific account, optionally filtered by status.',
     {
       account_id: z.string().describe('The Custify company/account ID to get alerts for'),
       status: z.enum(['open', 'acknowledged']).optional().describe('Filter by alert status'),
@@ -90,7 +90,7 @@ export function registerAlertTools(server: McpServer, client: CustifyClient): vo
           toolCategory: 'alerts',
         });
 
-        const segments = result.data || result.items || [];
+        const segments = (result as any).segments || result.data || result.items || [];
         const formatted = segments.map((s) => ({
           id: s.id,
           name: s.name,

@@ -15,7 +15,7 @@ export function registerSegmentsResource(server: McpServer, client: CustifyClien
         toolCategory: 'resources',
       });
 
-      const segments = result.data || result.items || [];
+      const segments = (result as any).segments || result.data || result.items || [];
       const formatted = segments.map((s) => ({
         id: s.id,
         name: s.name,

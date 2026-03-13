@@ -15,7 +15,7 @@ export function registerPlaybooksResource(server: McpServer, client: CustifyClie
         toolCategory: 'resources',
       });
 
-      const playbooks = result.data || result.items || [];
+      const playbooks = (result as any).playbooks || result.data || result.items || [];
       const formatted = playbooks.map((p) => ({
         id: p.id,
         name: p.name,

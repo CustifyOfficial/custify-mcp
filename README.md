@@ -145,11 +145,11 @@ Refer to your MCP client's documentation for how to configure an MCP server usin
 | `get_contact` | Get detailed contact information | `contact_id` | Read |
 | `get_health_scores` | Get health scores for an account | `account_id` | Read |
 | `get_usage_data` | Get usage/event data for an account | `account_id`, `event_name`, `start_date`, `end_date`, `type` | Read |
-| `get_usage_trends` | Get health score trends over time | `health_score_id`, `limit` | Read |
+| `get_usage_trends` | Get health score trends over time | `health_score_id`, `account_id`, `limit` | Read |
 | `get_alerts` | Get alerts/signals | `account_id`, `status`, `limit`, `offset` | Read |
 | `get_segment_membership` | Get segments an account belongs to | `account_id` | Read |
 | `create_note` | Create a note on an account | `account_id`, `body`, `subject` | Write |
-| `create_task` | Create a task for an account | `account_id`, `title`, `description`, `due_date`, `assignee_email`, `priority` | Write |
+| `create_task` | Create a task for an account | `account_id`, `title`, `description`, `due_date`, `assignee_id`, `priority` | Write |
 | `run_playbook` | Trigger a playbook on an account | `playbook_id`, `account_id` | Write |
 | `update_custom_fields` | Update custom fields on an account or contact | `entity_type`, `entity_id`, `fields` | Write |
 

@@ -61,27 +61,19 @@ export function registerActionTools(server: McpServer, client: CustifyClient): v
     },
     async (params) => {
       try {
-        const metadata: {
-          title: string;
-          entity: string;
-          entityModel: string;
-          dueDate?: string;
-          priority?: string;
-          assignees?: string[];
-          description?: string;
-        } = {
-          title: params.title,
-          entity: params.account_id,
-          entityModel: 'Company',
+        const taskData: Record<string, unknown> = {
+          name: params.title,
+          company: params.account_id,
           priority: params.priority ?? 'medium',
+          status: 'open',
         };
 
-        if (params.due_date) metadata.dueDate = params.due_date;
-        if (params.description) metadata.description = params.description;
-        if (params.assignee_id) metadata.assignees = [params.assignee_id];
+        if (params.due_date) taskData.dueDate = params.due_date;
+        if (params.description) taskData.description = params.description;
+        if (params.assignee_id) taskData.assignedTo = params.assignee_id;
 
         const result = await client.createTask(
-          { metadata },
+          taskData,
           { toolName: 'create_task', toolCategory: 'actions' }
         );
 

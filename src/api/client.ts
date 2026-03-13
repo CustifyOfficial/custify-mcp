@@ -315,17 +315,7 @@ export class CustifyClient {
   }
 
   async createTask(
-    params: {
-      metadata: {
-        title: string;
-        entity: string;
-        entityModel: string;
-        dueDate?: string;
-        priority?: string;
-        assignees?: string[];
-        description?: string;
-      };
-    },
+    params: Record<string, unknown>,
     toolMeta?: ToolMeta
   ): Promise<Task> {
     return this.request<Task>('POST', '/task', {
