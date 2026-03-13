@@ -204,7 +204,7 @@ export class CustifyClient {
   }
 
   async getContact(id: string, toolMeta?: ToolMeta): Promise<Contact> {
-    return this.request<Contact>('GET', `/customer/${encodeURIComponent(id)}`, {
+    return this.request<Contact>('GET', `/customer/all/${encodeURIComponent(id)}`, {
       toolName: toolMeta?.toolName,
       toolCategory: toolMeta?.toolCategory,
     });

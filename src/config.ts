@@ -5,6 +5,15 @@ export interface Config {
   port: number;
 }
 
+function validateTransport(value?: string): 'stdio' | 'streamable-http' {
+  const transport = value || 'stdio';
+  if (transport !== 'stdio' && transport !== 'streamable-http') {
+    console.error(`Error: Invalid MCP_TRANSPORT value "${transport}". Must be "stdio" or "streamable-http".`);
+    process.exit(1);
+  }
+  return transport;
+}
+
 export function loadConfig(): Config {
   const apiKey = process.env.CUSTIFY_API_KEY;
   if (!apiKey) {
@@ -14,7 +23,7 @@ export function loadConfig(): Config {
   return {
     apiKey,
     apiBaseUrl: process.env.CUSTIFY_API_URL || 'https://api.custify.com',
-    transport: (process.env.MCP_TRANSPORT as 'stdio' | 'streamable-http') || 'stdio',
+    transport: validateTransport(process.env.MCP_TRANSPORT),
     port: parseInt(process.env.PORT || '3000', 10),
   };
 }

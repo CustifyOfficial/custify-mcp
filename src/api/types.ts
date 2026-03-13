@@ -175,11 +175,18 @@ export interface PaginatedResponse<T> {
   companies?: T[];
   signals?: T[];
   people?: T[];
+  segments?: T[];
+  playbooks?: T[];
+  values?: T[];
   total?: number;
   page?: number;
   pages?: number;
   itemsPerPage?: number;
   hasMore?: boolean;
+  average?: number;
+  min?: number;
+  max?: number;
+  median?: number;
 }
 
 export interface ErrorResponse {

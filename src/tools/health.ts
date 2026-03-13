@@ -141,7 +141,7 @@ export function registerHealthTools(server: McpServer, client: CustifyClient): v
           { toolName: 'get_usage_trends', toolCategory: 'health' }
         );
 
-        const values = result.data || result.items || [];
+        const values = result.values || result.data || result.items || [];
 
         return {
           content: [

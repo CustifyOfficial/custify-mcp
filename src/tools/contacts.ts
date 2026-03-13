@@ -24,7 +24,8 @@ export function registerContactTools(server: McpServer, client: CustifyClient): 
           { toolName: 'get_contacts', toolCategory: 'contacts' }
         );
 
-        const contacts = result.people || result.data || result.items || [];
+        const contactsPage = Array.isArray(result) ? result[0] : result;
+        const contacts = contactsPage?.people || contactsPage?.data || contactsPage?.items || [];
         const formatted = contacts.map((c) => ({
           id: c.id,
           email: c.email ?? null,
@@ -42,9 +43,9 @@ export function registerContactTools(server: McpServer, client: CustifyClient): 
               type: 'text' as const,
               text: JSON.stringify({
                 contacts: formatted,
-                total: result.total ?? formatted.length,
-                page: result.page ?? page,
-                pages: result.pages ?? 1,
+                total: contactsPage?.total ?? formatted.length,
+                page: contactsPage?.page ?? page,
+                pages: contactsPage?.pages ?? 1,
               }),
             },
           ],

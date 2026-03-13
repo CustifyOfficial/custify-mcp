@@ -92,7 +92,7 @@ export function registerAlertTools(server: McpServer, client: CustifyClient): vo
           toolCategory: 'alerts',
         });
 
-        const segments: Segment[] = (result as any).segments || result.data || result.items || [];
+        const segments: Segment[] = result.segments || result.data || result.items || [];
         const formatted = segments.map((s: Segment) => ({
           id: s.id,
           name: s.name,

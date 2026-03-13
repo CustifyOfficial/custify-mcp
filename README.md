@@ -3,6 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@custify/mcp-server)](https://www.npmjs.com/package/@custify/mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-blue)](https://modelcontextprotocol.io)
+[![GitHub Stars](https://img.shields.io/github/stars/custify/custify-mcp-server)](https://github.com/custify/custify-mcp-server)
 
 Connect AI tools to your Custify customer success data via the Model Context Protocol.
 
