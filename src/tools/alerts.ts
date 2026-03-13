@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { CustifyClient, CustifyApiError } from '../api/client.js';
+import type { Segment } from '../api/types.js';
 
 export function registerAlertTools(server: McpServer, client: CustifyClient): void {
   // get_alerts
@@ -90,8 +91,8 @@ export function registerAlertTools(server: McpServer, client: CustifyClient): vo
           toolCategory: 'alerts',
         });
 
-        const segments = (result as any).segments || result.data || result.items || [];
-        const formatted = segments.map((s) => ({
+        const segments: Segment[] = (result as any).segments || result.data || result.items || [];
+        const formatted = segments.map((s: Segment) => ({
           id: s.id,
           name: s.name,
           description: s.description ?? null,

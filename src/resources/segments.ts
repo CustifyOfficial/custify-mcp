@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CustifyClient } from '../api/client.js';
+import type { Segment } from '../api/types.js';
 
 export function registerSegmentsResource(server: McpServer, client: CustifyClient): void {
   server.resource(
@@ -15,8 +16,8 @@ export function registerSegmentsResource(server: McpServer, client: CustifyClien
         toolCategory: 'resources',
       });
 
-      const segments = (result as any).segments || result.data || result.items || [];
-      const formatted = segments.map((s) => ({
+      const segments: Segment[] = (result as any).segments || result.data || result.items || [];
+      const formatted = segments.map((s: Segment) => ({
         id: s.id,
         name: s.name,
         description: s.description ?? null,

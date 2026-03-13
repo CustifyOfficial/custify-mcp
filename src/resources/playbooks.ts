@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { CustifyClient } from '../api/client.js';
+import type { Playbook } from '../api/types.js';
 
 export function registerPlaybooksResource(server: McpServer, client: CustifyClient): void {
   server.resource(
@@ -15,8 +16,8 @@ export function registerPlaybooksResource(server: McpServer, client: CustifyClie
         toolCategory: 'resources',
       });
 
-      const playbooks = (result as any).playbooks || result.data || result.items || [];
-      const formatted = playbooks.map((p) => ({
+      const playbooks: Playbook[] = (result as any).playbooks || result.data || result.items || [];
+      const formatted = playbooks.map((p: Playbook) => ({
         id: p.id,
         name: p.name,
         description: p.description ?? null,

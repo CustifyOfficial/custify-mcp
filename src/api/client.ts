@@ -167,7 +167,7 @@ export class CustifyClient {
     const seen = new Set<string>();
     const merged: Company[] = [];
     for (const c of [...nameCompanies, ...domainCompanies]) {
-      const id = c.id || (c as Record<string, unknown>)._id as string;
+      const id = c.id || (c as unknown as Record<string, unknown>)._id as string;
       if (id && !seen.has(id)) {
         seen.add(id);
         merged.push(c);
