@@ -146,7 +146,7 @@ Refer to your MCP client's documentation for how to configure an MCP server usin
 | `get_health_scores` | Get health scores for an account | `account_id` | Read |
 | `get_usage_data` | Get usage/event data for an account | `account_id`, `event_name`, `start_date`, `end_date`, `type` | Read |
 | `get_usage_trends` | Get health score trends over time | `health_score_id`, `account_id`, `limit` | Read |
-| `get_alerts` | Get alerts/signals | `account_id`, `status`, `limit`, `offset` | Read |
+| `get_alerts` | Get alerts/signals ⚠️ *V1 limitation: may not work reliably* | `account_id`, `status`, `limit`, `offset` | Read |
 | `get_segment_membership` | Get segments an account belongs to | `account_id` | Read |
 | `create_note` | Create a note on an account | `account_id`, `body`, `subject` | Write |
 | `create_task` | Create a task for an account | `account_id`, `title`, `description`, `due_date`, `assignee_id`, `priority` | Write |
@@ -206,7 +206,7 @@ Here are examples of what you can ask your AI tool once the Custify MCP server i
 > The AI will use the `segments` resource to find the At Risk segment ID, then `list_accounts` filtered by that segment.
 
 > **"Summarize Acme Corp's last 90 days"**
-> The AI will call `get_account`, `get_health_scores`, `get_usage_data`, `get_alerts`, and `get_contacts` to build a comprehensive account summary.
+> The AI will call `get_account`, `get_health_scores`, `get_usage_data`, and `get_contacts` to build a comprehensive account summary.
 
 > **"Add a note: Spoke with VP about API latency concerns"**
 > The AI will use `search_accounts` to find the right account, then `create_note` with the provided content.

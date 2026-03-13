@@ -4,10 +4,11 @@ import { CustifyClient, CustifyApiError } from '../api/client.js';
 import type { Segment } from '../api/types.js';
 
 export function registerAlertTools(server: McpServer, client: CustifyClient): void {
-  // get_alerts
+  // get_alerts — out of scope for V1: the underlying Custify signal API may not
+  // support this query reliably. Kept as a placeholder for future versions.
   server.tool(
     'get_alerts',
-    'Get alerts/signals from Custify for a specific account, optionally filtered by status.',
+    '[V1 LIMITATION: This tool may not work as expected — the underlying alerts API has limited support. Out of scope for the current version.] Get alerts/signals from Custify for a specific account, optionally filtered by status.',
     {
       account_id: z.string().describe('The Custify company/account ID to get alerts for'),
       status: z.enum(['open', 'acknowledged']).optional().describe('Filter by alert status'),
