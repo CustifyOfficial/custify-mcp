@@ -119,17 +119,25 @@ export function registerHealthTools(server: McpServer, client: CustifyClient): v
   // get_usage_trends
   server.tool(
     'get_usage_trends',
-    'Get historical health score values/trends over time for a specific health score metric.',
+    'Get historical health score values/trends over time for a specific health score metric. Optionally filter by account.',
     {
       health_score_id: z.string().describe('The health score definition ID'),
+      account_id: z.string().optional().describe('Filter by specific Custify company/account ID'),
       limit: z.number().min(1).max(100).default(30).optional().describe('Number of data points to return (default 30)'),
     },
     async (params) => {
       try {
         const limit = params.limit ?? 30;
+        const queryParams: { page?: number; itemsPerPage?: number; companyId?: string } = {
+          page: 1,
+          itemsPerPage: limit,
+        };
+        if (params.account_id) {
+          queryParams.companyId = params.account_id;
+        }
         const result = await client.getHealthScoreValues(
           params.health_score_id,
-          { page: 1, itemsPerPage: limit },
+          queryParams,
           { toolName: 'get_usage_trends', toolCategory: 'health' }
         );
 
@@ -141,6 +149,7 @@ export function registerHealthTools(server: McpServer, client: CustifyClient): v
               type: 'text' as const,
               text: JSON.stringify({
                 health_score_id: params.health_score_id,
+                account_id: params.account_id || null,
                 data_points: values,
                 total: result.total ?? values.length,
               }),

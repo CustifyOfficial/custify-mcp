@@ -133,9 +133,9 @@ export function registerAccountTools(server: McpServer, client: CustifyClient): 
   // search_accounts
   server.tool(
     'search_accounts',
-    'Search Custify accounts/companies by name.',
+    'Search Custify accounts/companies by name or domain.',
     {
-      query: z.string().describe('Search query to match against account names'),
+      query: z.string().describe('Search query to match against account names and domains'),
       limit: z.number().min(1).max(100).default(25).optional().describe('Max results to return (1-100, default 25)'),
     },
     async (params) => {

@@ -144,18 +144,41 @@ export class CustifyClient {
     limit?: number,
     toolMeta?: ToolMeta
   ): Promise<PaginatedResponse<Company>> {
-    const filters = [{ field: 'name', operator: 'contains', value: query }];
-    const params: Record<string, string> = {
-      filters: JSON.stringify(filters),
-      itemsPerPage: String(limit || 25),
-      page: '1',
-    };
+    const nameFilters = [{ field: 'name', operator: 'contains', value: query }];
+    const domainFilters = [{ field: 'domain', operator: 'contains', value: query }];
+    const requestLimit = String(limit || 25);
 
-    return this.request<PaginatedResponse<Company>>('GET', '/company/all', {
-      query: params,
-      toolName: toolMeta?.toolName,
-      toolCategory: toolMeta?.toolCategory,
-    });
+    const [nameResult, domainResult] = await Promise.all([
+      this.request<PaginatedResponse<Company>>('GET', '/company/all', {
+        query: { filters: JSON.stringify(nameFilters), itemsPerPage: requestLimit, page: '1' },
+        toolName: toolMeta?.toolName,
+        toolCategory: toolMeta?.toolCategory,
+      }),
+      this.request<PaginatedResponse<Company>>('GET', '/company/all', {
+        query: { filters: JSON.stringify(domainFilters), itemsPerPage: requestLimit, page: '1' },
+        toolName: toolMeta?.toolName,
+        toolCategory: toolMeta?.toolCategory,
+      }),
+    ]);
+
+    // Merge and deduplicate by company ID
+    const nameCompanies = nameResult.companies || nameResult.data || nameResult.items || [];
+    const domainCompanies = domainResult.companies || domainResult.data || domainResult.items || [];
+    const seen = new Set<string>();
+    const merged: Company[] = [];
+    for (const c of [...nameCompanies, ...domainCompanies]) {
+      const id = c.id || (c as Record<string, unknown>)._id as string;
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        merged.push(c);
+      }
+    }
+
+    return {
+      companies: merged.slice(0, limit || 25),
+      total: merged.length,
+      page: 1,
+    } as PaginatedResponse<Company>;
   }
 
   // Contact/People methods
@@ -216,12 +239,13 @@ export class CustifyClient {
 
   async getHealthScoreValues(
     healthScoreId: string,
-    params: { page?: number; itemsPerPage?: number },
+    params: { page?: number; itemsPerPage?: number; companyId?: string },
     toolMeta?: ToolMeta
   ): Promise<PaginatedResponse<HealthScoreValue>> {
     const query: Record<string, string> = {};
     if (params.page !== undefined) query.page = String(params.page);
     if (params.itemsPerPage !== undefined) query.itemsPerPage = String(params.itemsPerPage);
+    if (params.companyId) query.companyId = params.companyId;
 
     return this.request<PaginatedResponse<HealthScoreValue>>(
       'GET',

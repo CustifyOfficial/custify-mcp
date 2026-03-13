@@ -50,13 +50,13 @@ export function registerActionTools(server: McpServer, client: CustifyClient): v
   // create_task
   server.tool(
     'create_task',
-    'Create a task associated with a Custify account.',
+    'Create a task associated with a Custify account. Note: assignee_id must be a Custify user ObjectId (not an email address).',
     {
       account_id: z.string().describe('The Custify company/account ID'),
       title: z.string().describe('Task title'),
       description: z.string().optional().describe('Task description'),
       due_date: z.string().optional().describe('Due date in ISO format (e.g. 2024-12-31)'),
-      assignee_email: z.string().optional().describe('Email of the user to assign the task to'),
+      assignee_id: z.string().optional().describe('Custify user ID to assign the task to (must be a valid user ObjectId, not an email)'),
       priority: z.enum(['low', 'medium', 'high']).default('medium').optional().describe('Task priority (default: medium)'),
     },
     async (params) => {
@@ -78,7 +78,7 @@ export function registerActionTools(server: McpServer, client: CustifyClient): v
 
         if (params.due_date) metadata.dueDate = params.due_date;
         if (params.description) metadata.description = params.description;
-        if (params.assignee_email) metadata.assignees = [params.assignee_email];
+        if (params.assignee_id) metadata.assignees = [params.assignee_id];
 
         const result = await client.createTask(
           { metadata },
