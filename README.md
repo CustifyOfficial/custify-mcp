@@ -7,6 +7,8 @@
 
 Connect AI tools to your Custify customer success data via the Model Context Protocol.
 
+Query accounts, health scores, usage data, and more — or create notes, tasks, and trigger playbooks — all from within Claude, Cursor, VS Code, or any MCP-compatible AI tool.
+
 ---
 
 ## Quick Start
@@ -26,6 +28,14 @@ npx @custify/mcp-server
 ### 3. Configure your AI tool
 
 See the [Configuration](#configuration) section below for your specific tool.
+
+### 4. Try it out
+
+Ask your AI assistant:
+
+```
+How many churned accounts do I have?
+```
 
 ---
 
@@ -137,32 +147,137 @@ Refer to your MCP client's documentation for how to configure an MCP server usin
 
 ## Available Tools
 
-| Tool | Description | Key Parameters | Type |
-|------|-------------|----------------|------|
-| `list_accounts` | List accounts with optional filters | `segment_id`, `health_score_min`, `health_score_max`, `csm_email`, `lifecycle_stage`, `limit`, `offset` | Read |
-| `get_account` | Get detailed account information | `account_id` | Read |
-| `search_accounts` | Search accounts by name | `query`, `limit` | Read |
-| `get_contacts` | Get contacts for an account | `account_id`, `limit`, `offset` | Read |
-| `get_contact` | Get detailed contact information | `contact_id` | Read |
-| `get_health_scores` | Get health scores for an account | `account_id` | Read |
-| `get_usage_data` | Get usage/event data for an account | `account_id`, `event_name`, `start_date`, `end_date`, `type` | Read |
-| `get_usage_trends` | Get health score trends over time | `health_score_id`, `account_id`, `limit` | Read |
-| `get_alerts` | Get alerts/signals ⚠️ *V1 limitation: may not work reliably* | `account_id`, `status`, `limit`, `offset` | Read |
-| `get_segment_membership` | Get segments an account belongs to | `account_id` | Read |
-| `create_note` | Create a note on an account | `account_id`, `body`, `subject` | Write |
-| `create_task` | Create a task for an account | `account_id`, `title`, `description`, `due_date`, `assignee_id`, `priority` | Write |
-| `run_playbook` | Trigger a playbook on an account | `playbook_id`, `account_id` | Write |
-| `update_custom_fields` | Update custom fields on an account or contact | `entity_type`, `entity_id`, `fields` | Write |
+### Account Tools
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `list_accounts` | Read | List and filter accounts using Custify's filter system |
+| `get_account` | Read | Get full details for a specific account by ID |
+| `search_accounts` | Read | Search accounts by name or domain |
+| `list_attributes` | Read | Discover all available fields and their types for filtering |
+
+**`list_accounts`** supports Custify's full filter system. Each filter is an object with `fieldName`, `fieldType`, `filterType`, and `filterValue`. Use `list_attributes` first to discover available fields.
+
+**Filter examples:**
+
+| What you want | Filter object |
+|---------------|---------------|
+| Churned accounts | `{"fieldName": "churned", "fieldType": "Boolean", "filterType": "true"}` |
+| Name contains "acme" | `{"fieldName": "name", "fieldType": "String", "filterType": "contains", "filterValue": "acme"}` |
+| Health score > 50 | `{"fieldName": "metrics.health_scores.<score_id>", "fieldType": "Number", "filterType": "greater", "filterValue": "50"}` |
+| Signed up after a date | `{"fieldName": "signed_up_at", "fieldType": "Date", "filterType": "after", "filterValue": "2024-01-01"}` |
+| In a specific segment | `{"fieldName": "...", "fieldType": "Segment", "filterType": "is_any_of", "filterValue": ["<segment_id>"]}` |
+| Has any CSM assigned | `{"fieldName": "owners_csm", "fieldType": "User", "filterType": "any_value"}` |
+
+**Available filter types by field type:**
+
+| Field Type | Filter Types |
+|------------|-------------|
+| Boolean | `true`, `false` |
+| Number | `greater`, `lower`, `between`, `is_unknown`, `any_value` |
+| String | `contains`, `starts_with`, `ends_with`, `does_not_contain`, `is_unknown`, `any_value` |
+| Date | `more_than`, `less_than`, `exactly`, `after`, `before`, `between`, `on`, `last_week`, `this_week`, `last_month`, `this_month`, `last_quarter`, `this_quarter`, `last_year`, `this_year`, `is_unknown`, `any_value` |
+| Dropdown | `is_any_of`, `is_all_of`, `is_none_of`, `is_unknown`, `any_value` |
+| Segment | `is_any_of`, `is_all_of`, `is_none_of` |
+| Tag | `is_any_of`, `is_all_of`, `is_none_of`, `is_unknown`, `any_value` |
+| User | `is_in`, `is_not_in`, `is_unknown`, `any_value` |
+| Currency | `greater`, `lower`, `between`, `is_unknown`, `any_value` |
+
+### Contact Tools
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `get_contacts` | Read | List contacts/people for an account |
+| `get_contact` | Read | Get full contact details by ID |
+
+### Health & Usage Tools
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `get_health_scores` | Read | Get all health scores for an account, with score names and values |
+| `get_usage_data` | Read | Get product usage and event data for an account |
+| `get_usage_trends` | Read | Get health score values over time for trend analysis |
+
+### Alerts & Segments
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `get_alerts` | Read | Get alerts/signals for an account |
+| `get_segment_membership` | Read | Get which segments an account belongs to |
+
+### Action Tools
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `create_note` | Write | Add a note to an account's timeline |
+| `create_task` | Write | Create a task assigned to a CSM |
+| `run_playbook` | Write | Trigger a manually-started playbook on an account |
+| `update_custom_fields` | Write | Update custom attribute values on an account or contact |
 
 ---
 
 ## Available Resources
 
-| Resource | Description |
-|----------|-------------|
-| `segments` | List all segments defined in your Custify workspace |
-| `playbooks` | List all playbooks available in your Custify workspace |
-| `health_score_definitions` | List all health score definitions and their configurations |
+Resources provide read-only context that AI agents can use to understand your Custify workspace:
+
+| Resource | URI | Description |
+|----------|-----|-------------|
+| Segments | `custify://segments` | All segment definitions with names and IDs |
+| Playbooks | `custify://playbooks` | All playbook definitions with names, types, and IDs |
+| Health Score Definitions | `custify://health-score-definitions` | All health score configs with names, thresholds, and IDs |
+
+---
+
+## Examples
+
+Here are real-world examples of what you can ask your AI assistant once connected:
+
+### Querying accounts
+
+> **"How many churned accounts do I have?"**
+> Uses `list_accounts` with a churned filter to count accounts where churned = true.
+
+> **"Show me all accounts with a health score below 30"**
+> Uses `list_attributes` to find the health score field name, then `list_accounts` with a Number filter.
+
+> **"Find all accounts managed by jane@company.com"**
+> Uses `list_accounts` with a User filter on the CSM field.
+
+> **"Which accounts signed up this quarter?"**
+> Uses `list_accounts` with a Date filter: `filterType: "this_quarter"` on `signed_up_at`.
+
+### Account deep-dives
+
+> **"Give me a full summary of Acme Corp"**
+> Uses `search_accounts` to find Acme, then `get_account`, `get_health_scores`, `get_contacts`, `get_usage_data`, and `get_segment_membership` to build a comprehensive briefing.
+
+> **"What segments is Acme Corp in?"**
+> Uses `search_accounts` to find the account ID, then `get_segment_membership`.
+
+> **"Show me the health score trend for Acme Corp over the last month"**
+> Uses `get_health_scores` to find score IDs, then `get_usage_trends` for historical values.
+
+### Taking actions
+
+> **"Create a follow-up task for Acme Corp: Review onboarding progress, due next Friday"**
+> Uses `search_accounts` to find Acme, then `create_task` with title, due date, and account ID.
+
+> **"Add a note to Acme Corp: Spoke with VP of Engineering about API latency concerns"**
+> Uses `search_accounts` then `create_note` with the note body.
+
+> **"Run the renewal prep playbook for Acme Corp"**
+> Uses the `playbooks` resource to find the playbook ID, `search_accounts` for the account, then `run_playbook`.
+
+### Discovering your data model
+
+> **"What fields can I filter accounts by?"**
+> Uses `list_attributes` to return all available fields with their names and types.
+
+> **"What segments do we have?"**
+> Reads the `custify://segments` resource.
+
+> **"What playbooks are available?"**
+> Reads the `custify://playbooks` resource.
 
 ---
 
@@ -171,7 +286,7 @@ Refer to your MCP client's documentation for how to configure an MCP server usin
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `CUSTIFY_API_KEY` | Yes | - | Your Custify API key |
-| `CUSTIFY_API_URL` | No | `https://api.custify.com` | Custom API base URL |
+| `CUSTIFY_API_URL` | No | `https://api.custify.com` | Custom API base URL (for different clusters) |
 | `MCP_TRANSPORT` | No | `stdio` | Transport mode: `stdio` or `streamable-http` |
 | `PORT` | No | `3000` | HTTP server port (only used with `streamable-http` transport) |
 
@@ -190,27 +305,6 @@ docker run -d \
 ```
 
 The MCP endpoint will be available at `http://localhost:3000/mcp` and a health check endpoint at `http://localhost:3000/health`.
-
----
-
-## Examples
-
-Here are examples of what you can ask your AI tool once the Custify MCP server is connected:
-
-> **"Show me all accounts with declining health scores"**
-> The AI will use `list_accounts` with health score filters and `get_health_scores` to identify accounts trending downward.
-
-> **"Create a follow-up task for Acme Corp"**
-> The AI will use `search_accounts` to find Acme Corp, then `create_task` with the appropriate account ID, title, and due date.
-
-> **"Which accounts entered the At Risk segment this week?"**
-> The AI will use the `segments` resource to find the At Risk segment ID, then `list_accounts` filtered by that segment.
-
-> **"Summarize Acme Corp's last 90 days"**
-> The AI will call `get_account`, `get_health_scores`, `get_usage_data`, and `get_contacts` to build a comprehensive account summary.
-
-> **"Add a note: Spoke with VP about API latency concerns"**
-> The AI will use `search_accounts` to find the right account, then `create_note` with the provided content.
 
 ---
 
@@ -236,8 +330,14 @@ Make sure the `CUSTIFY_API_KEY` environment variable is set in your MCP client c
 **Authentication errors (401)**
 Your API key may be invalid or expired. Generate a new key from **Custify Settings > Developer > API Access**.
 
+**Permission errors (403)**
+The endpoint may not be available for API key access. Check that your Custify account has the required permissions.
+
 **Timeout or connection errors**
 If using HTTP transport, verify the server is running and accessible. Check that the `PORT` environment variable matches your deployment configuration. For STDIO transport, ensure no firewall or proxy is blocking local process communication.
+
+**Different Custify cluster?**
+If your Custify instance is on a different cluster (e.g., EU), set `CUSTIFY_API_URL` to your cluster's API URL.
 
 **Docker container exits immediately**
 Check the container logs with `docker logs custify-mcp`. The most common cause is a missing `CUSTIFY_API_KEY` environment variable.
