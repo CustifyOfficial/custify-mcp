@@ -30,10 +30,12 @@ export function registerHealthTools(server: McpServer, client: CustifyClient): v
 
         const scores = Object.entries(healthScores).map(([key, entry]) => {
           const definition = definitionMap.get(key);
+          const entryAny = entry as Record<string, unknown> | undefined;
           return {
             id: key,
             name: definition?.name || (key === 'global' ? 'Global Health Score' : key),
-            value: entry?.value ?? null,
+            score: entryAny?.score ?? entryAny?.value ?? null,
+            absolute_value: entryAny?.absolute_value ?? null,
             label: entry?.label ?? null,
             color: entry?.color ?? null,
             updated_at: entry?.updated_at ?? null,

@@ -133,10 +133,16 @@ export class CustifyClient {
   }
 
   async getCompany(id: string, toolMeta?: ToolMeta): Promise<Company> {
-    return this.request<Company>('GET', `/company/${encodeURIComponent(id)}`, {
+    // GET /company/:id returns {companies: [...], total} not a single object
+    const result = await this.request<PaginatedResponse<Company>>('GET', `/company/${encodeURIComponent(id)}`, {
       toolName: toolMeta?.toolName,
       toolCategory: toolMeta?.toolCategory,
     });
+    const companies = result.companies || result.data || result.items || [];
+    if (companies.length === 0) {
+      throw new CustifyApiError('not_found', `Account ${id} not found.`, 404);
+    }
+    return companies[0];
   }
 
   async searchCompanies(
@@ -144,8 +150,8 @@ export class CustifyClient {
     limit?: number,
     toolMeta?: ToolMeta
   ): Promise<PaginatedResponse<Company>> {
-    const nameFilters = [{ field: 'name', operator: 'contains', value: query }];
-    const domainFilters = [{ field: 'domain', operator: 'contains', value: query }];
+    const nameFilters = [{ fieldName: 'name', fieldType: 'String', filterType: 'contains', filterValue: query }];
+    const domainFilters = [{ fieldName: 'website', fieldType: 'String', filterType: 'contains', filterValue: query }];
     const requestLimit = String(limit || 25);
 
     const [nameResult, domainResult] = await Promise.all([
@@ -204,7 +210,7 @@ export class CustifyClient {
   }
 
   async getContact(id: string, toolMeta?: ToolMeta): Promise<Contact> {
-    return this.request<Contact>('GET', `/customer/all/${encodeURIComponent(id)}`, {
+    return this.request<Contact>('GET', `/customer/${encodeURIComponent(id)}`, {
       toolName: toolMeta?.toolName,
       toolCategory: toolMeta?.toolCategory,
     });
@@ -213,10 +219,8 @@ export class CustifyClient {
   // Health & Usage
 
   async getHealthScores(companyId: string, toolMeta?: ToolMeta): Promise<Company> {
-    return this.request<Company>('GET', `/company/${encodeURIComponent(companyId)}`, {
-      toolName: toolMeta?.toolName,
-      toolCategory: toolMeta?.toolCategory,
-    });
+    // Reuse getCompany which handles the {companies:[...]} response unwrapping
+    return this.getCompany(companyId, toolMeta);
   }
 
   async getUsageData(
@@ -365,10 +369,26 @@ export class CustifyClient {
     });
   }
 
+  // Attributes
+
+  async getCompanyAttributes(toolMeta?: ToolMeta): Promise<unknown[]> {
+    return this.request<unknown[]>('GET', '/company/attributes', {
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
+  async getContactAttributes(toolMeta?: ToolMeta): Promise<unknown[]> {
+    return this.request<unknown[]>('GET', '/customer/attributes', {
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
   // Resources
 
   async listSegments(toolMeta?: ToolMeta): Promise<PaginatedResponse<Segment>> {
-    return this.request<PaginatedResponse<Segment>>('GET', '/bucket', {
+    return this.request<PaginatedResponse<Segment>>('GET', '/segment', {
       query: { type: 'companies', page: '1', itemsPerPage: '100' },
       toolName: toolMeta?.toolName,
       toolCategory: toolMeta?.toolCategory,
