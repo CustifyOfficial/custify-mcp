@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@custify/mcp-server)](https://www.npmjs.com/package/@custify/mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-blue)](https://modelcontextprotocol.io)
-[![GitHub Stars](https://img.shields.io/github/stars/custify/custify-mcp-server)](https://github.com/custify/custify-mcp-server)
+[![GitHub Stars](https://img.shields.io/github/stars/CustifyOfficial/custify-mcp)](https://github.com/CustifyOfficial/custify-mcp)
 
 Connect AI tools to your Custify customer success data via the Model Context Protocol.
 
@@ -120,7 +120,7 @@ ChatGPT requires an HTTP-based MCP server. Deploy with Docker:
 docker run -d \
   -p 3000:3000 \
   -e CUSTIFY_API_KEY=your-api-key-here \
-  ghcr.io/custify/custify-mcp-server:latest
+  ghcr.io/custifyofficial/custify-mcp:latest
 ```
 
 Then configure ChatGPT to connect to your server's URL:
@@ -301,7 +301,7 @@ docker run -d \
   --name custify-mcp \
   -p 3000:3000 \
   -e CUSTIFY_API_KEY=your-api-key-here \
-  ghcr.io/custify/custify-mcp-server:latest
+  ghcr.io/custifyofficial/custify-mcp:latest
 ```
 
 The MCP endpoint will be available at `http://localhost:3000/mcp` and a health check endpoint at `http://localhost:3000/health`.
@@ -349,7 +349,7 @@ Check the container logs with `docker logs custify-mcp`. The most common cause i
 Contributions are welcome! To get started:
 
 ```bash
-git clone https://github.com/custify/custify-mcp-server.git
+git clone https://github.com/CustifyOfficial/custify-mcp.git
 cd custify-mcp-server
 npm install
 npm run dev
