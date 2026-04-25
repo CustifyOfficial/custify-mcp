@@ -13,7 +13,7 @@
   },
   "keywords": ["mcp", "custify", "customer-success", "ai", "claude"],
   "license": "MIT",
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": ["dist", "README.md", "CHANGELOG.md", "LICENSE"],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "express": "^4.21.0",
