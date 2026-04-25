@@ -154,17 +154,56 @@ export interface Note {
 }
 
 export interface Task {
-  id: string;
-  metadata: {
-    title: string;
-    entity: string;
-    entity_model: string;
-    due_date?: string;
-    priority?: string;
-    assignees?: string[];
-    description?: string;
-  };
+  _id?: string;
+  id?: string;
+  name?: string;
+  description?: string;
   status?: string;
+  priority?: string;
+  dueDate?: string | null;
+  snoozedUntilDate?: string | null;
+  company?: string;
+  company_id?: string;
+  people?: string;
+  user_id?: string;
+  account?: string;
+  assignedTo?: string | null;
+  assignedToModel?: string;
+  assignedToName?: string | null;
+  assignedToEmail?: string | null;
+  tags?: string[];
+  label?: string | null;
+  collaborators?: string[];
+  createdBy?: string;
+  createdByType?: string;
+  completedAt?: string | null;
+  completedBy?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface TaskFilter {
+  field: string;
+  values?: string[];
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface TaskFilterValues {
+  company?: Array<{ id: string; name?: string }>;
+  assignedTo?: Array<{ id: string; name?: string; profile_photo?: string | null }>;
+  collaborators?: Array<{ id: string; name?: string; profile_photo?: string | null }>;
+  createdBy?: Array<{ id: string; createdByType?: string; name?: string }>;
+  tags?: Array<{ id: string }>;
+}
+
+export interface Tag {
+  id: string;
+  name?: string;
+  category?: string;
+  color?: string;
+  color_text?: string;
+  position?: number;
   created_at?: string;
   updated_at?: string;
 }

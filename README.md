@@ -205,6 +205,41 @@ Refer to your MCP client's documentation for how to configure an MCP server usin
 | `get_alerts` | Read | Get alerts/signals for an account |
 | `get_segment_membership` | Read | Get which segments an account belongs to |
 
+### Task Tools
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `list_tasks` | Read | Query tasks across all accounts with filters and pagination |
+| `get_task` | Read | Get full details for a specific task by ID |
+| `list_task_filter_values` | Read | Discover assignee, account, and creator IDs (with names) currently used on tasks |
+| `list_tags` | Read | Resolve human-readable tag names to tag IDs. Use `category: "task"` to scope to task labels. |
+
+**`list_tasks`** uses flat, ergonomic parameters. Filters combine with AND. To resolve a tag name like "onboarding follow up" to an ID, call `list_tags` with `category: "task"`. To resolve an assignee name, call `list_task_filter_values` (returns user IDs with names).
+
+**Filter examples:**
+
+| What you want | Parameters |
+|---------------|------------|
+| My open tasks due today | `{"assignee_id": "<user_id>", "status": "open", "due": "today"}` |
+| Overdue tasks for an account | `{"account_id": "<account_id>", "status": "overdue"}` |
+| All tasks tagged "onboarding follow up" | `{"tag_ids": ["<tag_id>"], "status": "open"}` |
+| High-priority tasks due this week | `{"priority": "high", "due": "this_week"}` |
+| Tasks due in a custom date range | `{"due_after": "2026-04-01", "due_before": "2026-04-30"}` |
+| Tasks assigned to a CSM, sorted by due date | `{"assignee_id": "<user_id>", "sort_by": "dueDate", "sort_direction": "asc"}` |
+
+**Available status values:**
+
+| Status | Meaning |
+|--------|---------|
+| `open` | Status is open and not snoozed |
+| `done` | Task completed |
+| `not_relevant` | Marked as not relevant |
+| `overdue` | Open and `dueDate` <= yesterday |
+| `on_time` | Open and (no `dueDate` or `dueDate` > yesterday) |
+| `outstanding` | Open and `dueDate` <= today |
+
+**Available `due` shortcuts:** `past_due`, `today`, `this_week`, `this_month`, `later`. For custom ranges, supply **both** `due_after` and `due_before` (ISO dates). The `due` shortcut and the date-range pair are mutually exclusive — passing only one bound of the range is ignored.
+
 ### Action Tools
 
 | Tool | Type | Description |
@@ -256,6 +291,17 @@ Here are real-world examples of what you can ask your AI assistant once connecte
 
 > **"Show me the health score trend for Acme Corp over the last month"**
 > Uses `get_health_scores` to find score IDs, then `get_usage_trends` for historical values.
+
+### Querying tasks
+
+> **"What's on my plate today?"**
+> Uses `list_tasks` with `assignee_id` (your user ID) and `due: "today"` to pull a daily task list.
+
+> **"Show me all overdue tasks tagged 'onboarding follow up' assigned to Jane"**
+> Uses `list_tags` with `category: "task"` to resolve the tag name to an ID, `list_task_filter_values` to resolve Jane's user ID, then `list_tasks` with `tag_ids`, `assignee_id`, and `status: "overdue"`.
+
+> **"What's open for Acme Corp?"**
+> Uses `search_accounts` to find the account ID, then `list_tasks` with `account_id` and `status: "open"`.
 
 ### Taking actions
 

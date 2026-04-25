@@ -6,6 +6,9 @@ import type {
   Playbook,
   Note,
   Task,
+  TaskFilter,
+  TaskFilterValues,
+  Tag,
   PaginatedResponse,
   HealthScoreDefinition,
   HealthScoreValue,
@@ -324,6 +327,75 @@ export class CustifyClient {
   ): Promise<Task> {
     return this.request<Task>('POST', '/task', {
       body: params,
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
+  // Task list/get methods
+
+  async listTasks(
+    params: {
+      page?: number;
+      itemsPerPage?: number;
+      filters?: TaskFilter[];
+      sorting?: { field: string; direction: 'asc' | 'desc' };
+      searchTerm?: string;
+      enhanceCompany?: boolean;
+    },
+    toolMeta?: ToolMeta
+  ): Promise<{ total?: number; tasks?: Task[] }> {
+    const query: Record<string, string> = {};
+    if (params.page !== undefined) query.page = String(params.page);
+    if (params.itemsPerPage !== undefined) query.itemsPerPage = String(params.itemsPerPage);
+    if (params.filters && params.filters.length > 0) query.filters = JSON.stringify(params.filters);
+    if (params.sorting) query.sorting = JSON.stringify(params.sorting);
+    if (params.searchTerm) query.searchTerm = params.searchTerm;
+    if (params.enhanceCompany) query.enhanceCompany = 'true';
+
+    return this.request<{ total?: number; tasks?: Task[] }>('GET', '/task', {
+      query,
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
+  async getTask(id: string, toolMeta?: ToolMeta): Promise<Task> {
+    const result = await this.request<{ total?: number; tasks?: Task[] }>(
+      'GET',
+      `/task/${encodeURIComponent(id)}`,
+      {
+        toolName: toolMeta?.toolName,
+        toolCategory: toolMeta?.toolCategory,
+      }
+    );
+    const tasks = result.tasks || [];
+    if (tasks.length === 0) {
+      throw new CustifyApiError('not_found', `Task ${id} not found.`, 404);
+    }
+    return tasks[0];
+  }
+
+  async getTaskFilterValues(toolMeta?: ToolMeta): Promise<TaskFilterValues> {
+    return this.request<TaskFilterValues>('GET', '/task/filtersAvailableValues', {
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
+  // Tag methods
+
+  async listTags(
+    params: { category?: string; page?: number; itemsPerPage?: number },
+    toolMeta?: ToolMeta
+  ): Promise<{ total?: number; tags?: Tag[] }> {
+    const query: Record<string, string> = {};
+    if (params.category) query.category = params.category;
+    if (params.page !== undefined) query.page = String(params.page);
+    if (params.itemsPerPage !== undefined) query.itemsPerPage = String(params.itemsPerPage);
+
+    return this.request<{ total?: number; tags?: Tag[] }>('GET', '/tag', {
+      query,
       toolName: toolMeta?.toolName,
       toolCategory: toolMeta?.toolCategory,
     });

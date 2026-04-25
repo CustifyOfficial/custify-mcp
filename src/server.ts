@@ -6,6 +6,8 @@ import { registerContactTools } from './tools/contacts.js';
 import { registerHealthTools } from './tools/health.js';
 import { registerAlertTools } from './tools/alerts.js';
 import { registerActionTools } from './tools/actions.js';
+import { registerTaskTools } from './tools/tasks.js';
+import { registerTagTools } from './tools/tags.js';
 import { registerSegmentsResource } from './resources/segments.js';
 import { registerPlaybooksResource } from './resources/playbooks.js';
 import { registerHealthScoresResource } from './resources/health-scores.js';
@@ -25,6 +27,8 @@ export function createServer(config: Config): McpServer {
   registerHealthTools(server, client);
   registerAlertTools(server, client);
   registerActionTools(server, client);
+  registerTaskTools(server, client);
+  registerTagTools(server, client);
 
   // Register resources
   registerSegmentsResource(server, client);
