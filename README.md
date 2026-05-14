@@ -151,12 +151,25 @@ Refer to your MCP client's documentation for how to configure an MCP server usin
 
 | Tool | Type | Description |
 |------|------|-------------|
-| `list_accounts` | Read | List and filter accounts using Custify's filter system |
+| `list_accounts` | Read | List and filter accounts using tag IDs or Custify's advanced filter system |
 | `get_account` | Read | Get full details for a specific account by ID |
 | `search_accounts` | Read | Search accounts by name or domain |
 | `list_attributes` | Read | Discover all available fields and their types for filtering |
 
-**`list_accounts`** supports Custify's full filter system. Each filter is an object with `fieldName`, `fieldType`, `filterType`, and `filterValue`. Use `list_attributes` first to discover available fields.
+**`list_accounts`** supports `tag_ids` for simple tag filtering and Custify's full filter system for advanced fields. Use `list_tags` with `category: "company"` to resolve account tag names to IDs. Use `list_attributes` with `entity_type: "account"` to discover available fields.
+
+Tag filters use this backend format when passed manually through `filters`:
+
+```json
+{
+  "fieldName": "tags",
+  "fieldType": "Tag",
+  "filterType": "is_any_of",
+  "filterValue": ["<company_tag_id>"]
+}
+```
+
+Supported tag `filterType` values are `is_any_of`, `is_all_of`, `is_none_of`, `is_unknown`, and `any_value`. For ID-based tag filters, `filterValue` must be a non-empty array of tag IDs.
 
 **Filter examples:**
 
@@ -164,9 +177,12 @@ Refer to your MCP client's documentation for how to configure an MCP server usin
 |---------------|---------------|
 | Churned accounts | `{"fieldName": "churned", "fieldType": "Boolean", "filterType": "true"}` |
 | Name contains "acme" | `{"fieldName": "name", "fieldType": "String", "filterType": "contains", "filterValue": "acme"}` |
+| Has any listed account tag | `{"tag_ids": ["<company_tag_id>"], "tag_match": "any"}` |
+| Has all listed account tags | `{"tag_ids": ["<company_tag_id_1>", "<company_tag_id_2>"], "tag_match": "all"}` |
+| Has none of the listed account tags | `{"tag_ids": ["<company_tag_id>"], "tag_match": "none_of"}` |
 | Health score > 50 | `{"fieldName": "metrics.health_scores.<score_id>", "fieldType": "Number", "filterType": "greater", "filterValue": "50"}` |
 | Signed up after a date | `{"fieldName": "signed_up_at", "fieldType": "Date", "filterType": "after", "filterValue": "2024-01-01"}` |
-| In a specific segment | `{"fieldName": "...", "fieldType": "Segment", "filterType": "is_any_of", "filterValue": ["<segment_id>"]}` |
+| In a specific segment | `{"fieldName": "buckets", "fieldType": "Segment", "filterType": "is_any_of", "filterValue": ["<segment_id>"]}` |
 | Has any CSM assigned | `{"fieldName": "owners_csm", "fieldType": "User", "filterType": "any_value"}` |
 
 **Available filter types by field type:**
@@ -187,8 +203,20 @@ Refer to your MCP client's documentation for how to configure an MCP server usin
 
 | Tool | Type | Description |
 |------|------|-------------|
-| `get_contacts` | Read | List contacts/people for an account |
+| `list_contacts` | Read | List and filter contacts across all accounts using tag IDs or Custify filters |
+| `get_contacts` | Read | List contacts/people linked to one account |
 | `get_contact` | Read | Get full contact details by ID |
+
+**`list_contacts`** is the contact equivalent of `list_accounts`. Use `tag_ids` with people tags for simple tag filtering, or pass advanced Custify filters. Use `list_tags` with `category: "people"` to resolve contact tag names to IDs. Use `list_attributes` with `entity_type: "contact"` to discover available contact fields.
+
+**Contact filter examples:**
+
+| What you want | Parameters |
+|---------------|------------|
+| Contacts tagged "champion" | `{"tag_ids": ["<people_tag_id>"], "tag_match": "any"}` |
+| Contacts with no listed tags | `{"tag_ids": ["<people_tag_id>"], "tag_match": "none_of"}` |
+| Email contains a domain | `{"filters": [{"fieldName": "email", "fieldType": "String", "filterType": "contains", "filterValue": "@example.com"}]}` |
+| Contacts linked to an account | `{"filters": [{"fieldName": "companies", "fieldType": "Company", "filterType": "is_in", "filterValue": "<account_id>"}]}` |
 
 ### Health & Usage Tools
 
@@ -240,6 +268,14 @@ Refer to your MCP client's documentation for how to configure an MCP server usin
 
 **Available `due` shortcuts:** `past_due`, `today`, `this_week`, `this_month`, `later`. For custom ranges, supply **both** `due_after` and `due_before` (ISO dates). The `due` shortcut and the date-range pair are mutually exclusive — passing only one bound of the range is ignored.
 
+### Objective Tools
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `get_account_objectives` | Read | Get customer objectives for a specific account, using either the Custify account ID or your external `company_id` |
+
+**`get_account_objectives`** accepts `account_id` (Custify internal company ID) or `external_account_id` (your `company_id`). It supports pagination, sorting, and Custify filter objects for fields such as `objectiveStatus`, `importance`, `risk`, and `dueAt`.
+
 ### Action Tools
 
 | Tool | Type | Description |
@@ -248,6 +284,10 @@ Refer to your MCP client's documentation for how to configure an MCP server usin
 | `create_task` | Write | Create a task assigned to a CSM |
 | `run_playbook` | Write | Trigger a manually-started playbook on an account |
 | `update_custom_fields` | Write | Update custom attribute values on an account or contact |
+| `add_tag_to_entities` | Write | Add an existing tag to one or more accounts or contacts |
+| `remove_tag_from_entities` | Write | Remove an existing tag from one or more accounts or contacts |
+
+**Tag actions** accept `entity_type: "account"` or `entity_type: "contact"`, an array of Custify internal `entity_ids`, and a `tag_id`. Use `list_tags` or the `custify://tags` resource first to resolve tag names to IDs.
 
 ---
 
@@ -260,6 +300,9 @@ Resources provide read-only context that AI agents can use to understand your Cu
 | Segments | `custify://segments` | All segment definitions with names and IDs |
 | Playbooks | `custify://playbooks` | All playbook definitions with names, types, and IDs |
 | Health Score Definitions | `custify://health-score-definitions` | All health score configs with names, thresholds, and IDs |
+| Calculated Metrics | `custify://calculated-metrics` | All calculated metric definitions for companies and people |
+| Lifecycles | `custify://lifecycles` | All lifecycle definitions with goals and task templates |
+| Tags | `custify://tags` | All tags grouped by category |
 
 ---
 
@@ -280,6 +323,17 @@ Here are real-world examples of what you can ask your AI assistant once connecte
 
 > **"Which accounts signed up this quarter?"**
 > Uses `list_accounts` with a Date filter: `filterType: "this_quarter"` on `signed_up_at`.
+
+> **"Show accounts tagged renewal risk"**
+> Uses `list_tags` with `category: "company"` to resolve the tag ID, then `list_accounts` with `tag_ids`.
+
+### Querying contacts
+
+> **"Show contacts tagged champion"**
+> Uses `list_tags` with `category: "people"` to resolve the tag ID, then `list_contacts` with `tag_ids`.
+
+> **"Find contacts with example.com email addresses"**
+> Uses `list_contacts` with a String filter on `email`.
 
 ### Account deep-dives
 
@@ -303,6 +357,11 @@ Here are real-world examples of what you can ask your AI assistant once connecte
 > **"What's open for Acme Corp?"**
 > Uses `search_accounts` to find the account ID, then `list_tasks` with `account_id` and `status: "open"`.
 
+### Querying objectives
+
+> **"What objectives are open for Acme Corp?"**
+> Uses `search_accounts` to find the account ID, then `get_account_objectives`.
+
 ### Taking actions
 
 > **"Create a follow-up task for Acme Corp: Review onboarding progress, due next Friday"**
@@ -314,6 +373,9 @@ Here are real-world examples of what you can ask your AI assistant once connecte
 > **"Run the renewal prep playbook for Acme Corp"**
 > Uses the `playbooks` resource to find the playbook ID, `search_accounts` for the account, then `run_playbook`.
 
+> **"Tag Acme Corp as renewal risk"**
+> Uses `search_accounts` to find the account ID, `list_tags` or `custify://tags` to find the tag ID, then `add_tag_to_entities`.
+
 ### Discovering your data model
 
 > **"What fields can I filter accounts by?"**
@@ -324,6 +386,12 @@ Here are real-world examples of what you can ask your AI assistant once connecte
 
 > **"What playbooks are available?"**
 > Reads the `custify://playbooks` resource.
+
+> **"What calculated metrics and lifecycle stages do we have?"**
+> Reads the `custify://calculated-metrics` and `custify://lifecycles` resources.
+
+> **"What tags can I use on accounts and contacts?"**
+> Reads the `custify://tags` resource.
 
 ---
 

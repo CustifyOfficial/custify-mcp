@@ -155,7 +155,7 @@ Use list_tags (with category="task") to resolve tag names to IDs. Use list_task_
   // get_task
   server.tool(
     'get_task',
-    'Fetch a single Custify task by ID.',
+    'Fetch one Custify task by internal task ID. Use list_tasks first when you need to find task IDs by assignee, account, tag, status, due date, or priority.',
     {
       task_id: z.string().describe('The Custify task ID'),
     },

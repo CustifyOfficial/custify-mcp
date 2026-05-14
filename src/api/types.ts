@@ -92,6 +92,17 @@ export interface HealthScoreValue {
   created_at?: string;
 }
 
+export interface CalculatedMetric {
+  id: string;
+  name?: string;
+  description?: string;
+  type?: string;
+  tags?: string[];
+  frequency?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface UsageData {
   event_name: string;
   count?: number;
@@ -138,6 +149,67 @@ export interface Playbook {
   status?: string;
   trigger?: unknown;
   actions?: unknown[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LifecycleGoal {
+  id?: string;
+  name?: string;
+  criteria?: string;
+  segment?: string | null;
+  tasks?: unknown[];
+}
+
+export interface Lifecycle {
+  id: string;
+  name?: string;
+  description?: string;
+  startCondition?: string;
+  startConditionEntity?: string;
+  startConditionEntityName?: string;
+  endCondition?: string;
+  endConditionEntity?: string;
+  endConditionEntityName?: string;
+  daysToComplete?: string | number;
+  daysToStuck?: string | number;
+  position?: number;
+  status?: string;
+  showInC360?: boolean;
+  tags?: string[];
+  goals?: LifecycleGoal[];
+  tasks?: unknown[];
+  settings?: Record<string, unknown>;
+  created_by?: string;
+  created_by_name?: string;
+  updated_by?: string;
+  updated_by_name?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Objective {
+  id: string;
+  company?: string;
+  name?: string;
+  description?: string;
+  importance?: string;
+  risk?: string;
+  health?: string;
+  completionPercentage?: number;
+  completionType?: string;
+  completionAttribute?: string;
+  valueBaseline?: number;
+  valueTarget?: number;
+  valueCurrent?: number;
+  objectiveStatus?: string;
+  startAt?: string;
+  dueAt?: string;
+  completedAt?: string;
+  tags?: string[];
+  assignedTo?: string | null;
+  assignedToName?: string | null;
+  collaborators?: Array<{ name?: string; entity?: string }>;
   created_at?: string;
   updated_at?: string;
 }
@@ -200,6 +272,7 @@ export interface TaskFilterValues {
 export interface Tag {
   id: string;
   name?: string;
+  description?: string;
   category?: string;
   color?: string;
   color_text?: string;
@@ -216,6 +289,9 @@ export interface PaginatedResponse<T> {
   people?: T[];
   segments?: T[];
   playbooks?: T[];
+  calculated_metrics?: T[];
+  lifecycles?: T[];
+  objectives?: T[];
   values?: T[];
   total?: number;
   page?: number;

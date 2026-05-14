@@ -1,10 +1,13 @@
 import type {
+  CalculatedMetric,
   Company,
   Contact,
   Alert,
   Segment,
   Playbook,
+  Lifecycle,
   Note,
+  Objective,
   Task,
   TaskFilter,
   TaskFilterValues,
@@ -196,7 +199,7 @@ export class CustifyClient {
     companyId: string,
     params: { page?: number; itemsPerPage?: number },
     toolMeta?: ToolMeta
-  ): Promise<PaginatedResponse<Contact>> {
+  ): Promise<PaginatedResponse<Contact> | PaginatedResponse<Contact>[]> {
     const query: Record<string, string> = {};
     if (params.page !== undefined) query.page = String(params.page);
     if (params.itemsPerPage !== undefined) query.itemsPerPage = String(params.itemsPerPage);
@@ -210,6 +213,28 @@ export class CustifyClient {
         toolCategory: toolMeta?.toolCategory,
       }
     );
+  }
+
+  async listContacts(
+    params: {
+      page?: number;
+      itemsPerPage?: number;
+      filters?: unknown[];
+      sorting?: unknown;
+    },
+    toolMeta?: ToolMeta
+  ): Promise<PaginatedResponse<Contact> | PaginatedResponse<Contact>[]> {
+    const query: Record<string, string> = {};
+    if (params.page !== undefined) query.page = String(params.page);
+    if (params.itemsPerPage !== undefined) query.itemsPerPage = String(params.itemsPerPage);
+    if (params.filters && params.filters.length > 0) query.filters = JSON.stringify(params.filters);
+    if (params.sorting) query.sorting = JSON.stringify(params.sorting);
+
+    return this.request<PaginatedResponse<Contact> | PaginatedResponse<Contact>[]>('GET', '/people/all', {
+      query,
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
   }
 
   async getContact(id: string, toolMeta?: ToolMeta): Promise<Contact> {
@@ -401,6 +426,17 @@ export class CustifyClient {
     });
   }
 
+  async updateTagsForEntities(
+    params: { ids: string[]; type: 'add' | 'remove'; category: 'company' | 'people'; tag: string },
+    toolMeta?: ToolMeta
+  ): Promise<unknown> {
+    return this.request<unknown>('PATCH', '/tag/entity', {
+      body: params,
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
   async runPlaybook(
     playbookId: string,
     entityId: string,
@@ -477,6 +513,65 @@ export class CustifyClient {
 
   async listHealthScoreDefinitions(toolMeta?: ToolMeta): Promise<HealthScoreDefinition[]> {
     return this.request<HealthScoreDefinition[]>('GET', '/health_score/simple', {
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
+  async listCalculatedMetrics(
+    params: { type?: 'company' | 'people'; page?: number; itemsPerPage?: number },
+    toolMeta?: ToolMeta
+  ): Promise<PaginatedResponse<CalculatedMetric>> {
+    const query: Record<string, string> = {};
+    if (params.type) query.type = params.type;
+    if (params.page !== undefined) query.page = String(params.page);
+    if (params.itemsPerPage !== undefined) query.itemsPerPage = String(params.itemsPerPage);
+
+    return this.request<PaginatedResponse<CalculatedMetric>>('GET', '/calculated_metric', {
+      query,
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
+  async listLifecycles(
+    params: { page?: number; itemsPerPage?: number } = {},
+    toolMeta?: ToolMeta
+  ): Promise<PaginatedResponse<Lifecycle>> {
+    const query: Record<string, string> = {};
+    if (params.page !== undefined) query.page = String(params.page);
+    if (params.itemsPerPage !== undefined) query.itemsPerPage = String(params.itemsPerPage);
+
+    return this.request<PaginatedResponse<Lifecycle>>('GET', '/lifecycle', {
+      query,
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
+  async listObjectives(
+    params: {
+      company?: string;
+      company_id?: string;
+      page?: number;
+      itemsPerPage?: number;
+      filters?: unknown[];
+      sort?: string;
+      order?: 'asc' | 'desc';
+    },
+    toolMeta?: ToolMeta
+  ): Promise<PaginatedResponse<Objective>> {
+    const query: Record<string, string> = {};
+    if (params.company) query.company = params.company;
+    if (params.company_id) query.company_id = params.company_id;
+    if (params.page !== undefined) query.page = String(params.page);
+    if (params.itemsPerPage !== undefined) query.itemsPerPage = String(params.itemsPerPage);
+    if (params.filters && params.filters.length > 0) query.filters = JSON.stringify(params.filters);
+    if (params.sort) query.sort = params.sort;
+    if (params.order) query.order = params.order;
+
+    return this.request<PaginatedResponse<Objective>>('GET', '/objective', {
+      query,
       toolName: toolMeta?.toolName,
       toolCategory: toolMeta?.toolCategory,
     });

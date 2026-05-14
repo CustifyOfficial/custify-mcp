@@ -8,9 +8,13 @@ import { registerAlertTools } from './tools/alerts.js';
 import { registerActionTools } from './tools/actions.js';
 import { registerTaskTools } from './tools/tasks.js';
 import { registerTagTools } from './tools/tags.js';
+import { registerObjectiveTools } from './tools/objectives.js';
 import { registerSegmentsResource } from './resources/segments.js';
 import { registerPlaybooksResource } from './resources/playbooks.js';
 import { registerHealthScoresResource } from './resources/health-scores.js';
+import { registerCalculatedMetricsResource } from './resources/calculated-metrics.js';
+import { registerLifecyclesResource } from './resources/lifecycles.js';
+import { registerTagsResource } from './resources/tags.js';
 
 export function createServer(config: Config): McpServer {
   const client = new CustifyClient(config.apiKey, config.apiBaseUrl);
@@ -29,11 +33,15 @@ export function createServer(config: Config): McpServer {
   registerActionTools(server, client);
   registerTaskTools(server, client);
   registerTagTools(server, client);
+  registerObjectiveTools(server, client);
 
   // Register resources
   registerSegmentsResource(server, client);
   registerPlaybooksResource(server, client);
   registerHealthScoresResource(server, client);
+  registerCalculatedMetricsResource(server, client);
+  registerLifecyclesResource(server, client);
+  registerTagsResource(server, client);
 
   return server;
 }
