@@ -8,7 +8,7 @@ export function registerAlertTools(server: McpServer, client: CustifyClient): vo
   // support this query reliably. Kept as a placeholder for future versions.
   server.tool(
     'get_alerts',
-    '[V1 LIMITATION: This tool may not work as expected — the underlying alerts API has limited support. Out of scope for the current version.] Get alerts/signals from Custify for a specific account, optionally filtered by status.',
+    '[V1 LIMITATION: underlying alerts API support is limited.] Fetch alerts/signals for one Custify account, optionally filtered by open or acknowledged status. Use only when the user asks about alerts or signals.',
     {
       account_id: z.string().describe('The Custify company/account ID to get alerts for'),
       status: z.enum(['open', 'acknowledged']).optional().describe('Filter by alert status'),
@@ -81,7 +81,7 @@ export function registerAlertTools(server: McpServer, client: CustifyClient): vo
   // get_segment_membership
   server.tool(
     'get_segment_membership',
-    'Get all segments that a specific Custify account belongs to.',
+    'Fetch the segments that one Custify account currently belongs to. Use list_accounts with a Segment filter when you need accounts inside a segment.',
     {
       account_id: z.string().describe('The Custify company/account ID'),
     },

@@ -6,7 +6,7 @@ export function registerHealthTools(server: McpServer, client: CustifyClient): v
   // get_health_scores
   server.tool(
     'get_health_scores',
-    'Get health scores for a specific Custify account, including global and individual score breakdowns.',
+    'Fetch current health score values for one Custify account, including global and individual score breakdowns. Use get_usage_trends for historical health score values over time.',
     {
       account_id: z.string().describe('The Custify company/account ID'),
     },
@@ -69,7 +69,7 @@ export function registerHealthTools(server: McpServer, client: CustifyClient): v
   // get_usage_data
   server.tool(
     'get_usage_data',
-    'Get usage/event data for a Custify account, optionally filtered by event name and date range.',
+    'Fetch product usage/event metrics for one Custify account, optionally filtered by event name and date range. Use this for event frequency, count, or last occurrence data, not health scores.',
     {
       account_id: z.string().describe('The Custify company/account ID'),
       event_name: z.string().optional().describe('Filter by specific event name'),
@@ -121,7 +121,7 @@ export function registerHealthTools(server: McpServer, client: CustifyClient): v
   // get_usage_trends
   server.tool(
     'get_usage_trends',
-    'Get historical health score values/trends over time for a specific health score metric. Optionally filter by account.',
+    'Fetch historical values for one health score definition, optionally scoped to an account. Use this for trend charts and trajectory questions after identifying the health_score_id.',
     {
       health_score_id: z.string().describe('The health score definition ID'),
       account_id: z.string().optional().describe('Filter by specific Custify company/account ID'),

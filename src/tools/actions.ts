@@ -6,7 +6,7 @@ export function registerActionTools(server: McpServer, client: CustifyClient): v
   // create_note
   server.tool(
     'create_note',
-    'Create a note on a Custify account.',
+    'Create a timeline note on one Custify account. Use this for human-readable account notes, not tasks or custom field updates.',
     {
       account_id: z.string().describe('The Custify company/account ID'),
       body: z.string().describe('The note content/body text'),
@@ -50,7 +50,7 @@ export function registerActionTools(server: McpServer, client: CustifyClient): v
   // create_task
   server.tool(
     'create_task',
-    'Create a task associated with a Custify account. Note: assignee_id must be a Custify user ObjectId (not an email address).',
+    'Create a task associated with one Custify account. Use list_task_filter_values to resolve assignee IDs; assignee_id must be a Custify user ObjectId, not an email address.',
     {
       account_id: z.string().describe('The Custify company/account ID'),
       title: z.string().describe('Task title'),
@@ -144,7 +144,7 @@ export function registerActionTools(server: McpServer, client: CustifyClient): v
   // update_custom_fields
   server.tool(
     'update_custom_fields',
-    'Update custom attribute fields on a Custify account or contact.',
+    'Update custom_attributes on one Custify account or contact by internal entity ID. Use list_attributes first to confirm field names and expected value types.',
     {
       entity_type: z.enum(['account', 'contact']).describe('Type of entity to update'),
       entity_id: z.string().describe('The entity ID (company ID or contact ID)'),

@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { CustifyClient, CustifyApiError } from '../api/client.js';
+import { custifyFilterSchema, prepareEntityFilters, tagIdsSchema, tagMatchSchema, toolInputError } from './filter-utils.js';
 
 function formatHealthScores(healthScores?: Record<string, { score?: number; absolute_value?: number } | undefined>): Record<string, number | null> | null {
   if (!healthScores) return null;
@@ -34,18 +35,18 @@ export function registerAccountTools(server: McpServer, client: CustifyClient): 
   // list_accounts
   server.tool(
     'list_accounts',
-    `List Custify accounts/companies with optional filters. Filters use Custify's filter format: each filter is an object with fieldName, fieldType, filterType, and filterValue. Use the list_attributes tool to discover available fields and their types. Common examples:
+    `List Custify accounts/companies across the customer base. Use this for structured account queries, including tags, segments, health scores, CSM ownership, lifecycle/date fields, and custom attributes. Use search_accounts instead for a simple name/domain lookup.
+
+Prefer tag_ids for tag filters; call list_tags with category="company" first to resolve names to IDs. For other fields, filters use Custify's filter format: each filter is an object with fieldName, fieldType, filterType, and filterValue. Use list_attributes with entity_type="account" to discover fields. Common examples:
 - Churned accounts: {"fieldName":"churned","fieldType":"Boolean","filterType":"true"}
 - Name contains: {"fieldName":"name","fieldType":"String","filterType":"contains","filterValue":"acme"}
+- Tagged accounts: {"tag_ids":["<company_tag_id>"],"tag_match":"any"}
 - Health score > 50: {"fieldName":"metrics.health_scores.<score_id>","fieldType":"Number","filterType":"greater","filterValue":"50"}
-- In segment: {"fieldName":"metrics.health_scores.<score_id>","fieldType":"Segment","filterType":"is_any_of","filterValue":["<segment_id>"]}`,
+- In segment: {"fieldName":"buckets","fieldType":"Segment","filterType":"is_any_of","filterValue":["<segment_id>"]}`,
     {
-      filters: z.array(z.object({
-        fieldName: z.string().describe('The attribute field name (e.g. "name", "churned", "metrics.health_scores.<id>")'),
-        fieldType: z.string().describe('The field type: String, Number, Boolean, Date, Dropdown, User, Segment, Tag, Currency'),
-        filterType: z.string().describe('The filter operator. Boolean: true/false. Number: greater/lower/between. String: contains/starts_with/ends_with/does_not_contain. Date: more_than/less_than/after/before/between/on/last_week/this_month etc. Dropdown/Segment/Tag: is_any_of/is_all_of/is_none_of. General: is_unknown/any_value'),
-        filterValue: z.unknown().optional().describe('The filter value. Type depends on filterType.'),
-      })).optional().describe('Array of filter objects. Use list_attributes to discover available fields.'),
+      filters: z.array(custifyFilterSchema).optional().describe('Advanced Custify filter objects. Filters combine with AND. For tags, prefer tag_ids; manual tag filters must use fieldName="tags", fieldType="Tag", filterType is_any_of/is_all_of/is_none_of/is_unknown/any_value, and filterValue as an array of tag IDs when IDs are needed.'),
+      tag_ids: tagIdsSchema.describe('Filter accounts by company tag IDs. Use list_tags with category="company" to resolve names first.'),
+      tag_match: tagMatchSchema,
       sorting_field: z.string().optional().describe('Field name to sort by (e.g. "name", "signed_up_at", "metrics.health_scores.<id>")'),
       sorting_direction: z.enum(['asc', 'desc']).optional().describe('Sort direction (default: desc)'),
       limit: z.number().min(1).max(100).default(25).optional().describe('Number of results (1-100, default 25)'),
@@ -56,6 +57,12 @@ export function registerAccountTools(server: McpServer, client: CustifyClient): 
         const limit = params.limit ?? 25;
         const offset = params.offset ?? 0;
         const page = Math.floor(offset / limit) + 1;
+        const filterResult = prepareEntityFilters({
+          filters: params.filters,
+          tagIds: params.tag_ids,
+          tagMatch: params.tag_match,
+        });
+        if (filterResult.error) return toolInputError(filterResult.error);
 
         const sorting = params.sorting_field ? {
           field: params.sorting_field,
@@ -63,7 +70,7 @@ export function registerAccountTools(server: McpServer, client: CustifyClient): 
         } : undefined;
 
         const result = await client.listCompanies(
-          { page, itemsPerPage: limit, filters: params.filters ?? [], sorting },
+          { page, itemsPerPage: limit, filters: filterResult.filters, sorting },
           { toolName: 'list_accounts', toolCategory: 'accounts' }
         );
 
@@ -98,7 +105,7 @@ export function registerAccountTools(server: McpServer, client: CustifyClient): 
   // get_account
   server.tool(
     'get_account',
-    'Get detailed information about a specific Custify account/company by ID.',
+    'Fetch one Custify account/company by internal account ID. Use search_accounts first if you only know the account name, domain, or external company_id.',
     {
       account_id: z.string().describe('The Custify company/account ID'),
     },
@@ -127,7 +134,7 @@ export function registerAccountTools(server: McpServer, client: CustifyClient): 
   // search_accounts
   server.tool(
     'search_accounts',
-    'Search Custify accounts/companies by name or domain.',
+    'Search Custify accounts/companies by name or domain. Use this for lookup/disambiguation; use list_accounts for structured filters such as tags, CSM, segments, health scores, or dates.',
     {
       query: z.string().describe('Search query to match against account names and domains'),
       limit: z.number().min(1).max(100).default(25).optional().describe('Max results to return (1-100, default 25)'),
@@ -169,7 +176,7 @@ export function registerAccountTools(server: McpServer, client: CustifyClient): 
   // list_attributes
   server.tool(
     'list_attributes',
-    'List all available company/account attributes that can be used for filtering and sorting. Returns field names, display names, and field types. Use this to discover which fields are available before building filters for list_accounts.',
+    'Discover filterable and sortable Custify attributes for accounts or contacts. Use entity_type="account" before advanced list_accounts filters and entity_type="contact" before advanced list_contacts filters.',
     {
       entity_type: z.enum(['account', 'contact']).default('account').optional().describe('Entity type to get attributes for (default: account)'),
     },
