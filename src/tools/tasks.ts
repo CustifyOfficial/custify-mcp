@@ -14,6 +14,12 @@ const STATUS_MAP: Record<string, string> = {
   outstanding: 'outstanding',
 };
 
+const TASK_STATUS_UPDATE_MAP = {
+  open: 'open',
+  done: 'done',
+  not_relevant: 'not relevant',
+} as const;
+
 function formatTask(t: Task) {
   return {
     id: (t.id ?? t._id) ?? null,
@@ -167,6 +173,45 @@ Use list_tags (with category="task") to resolve tag names to IDs. Use list_task_
         });
         return {
           content: [{ type: 'text' as const, text: JSON.stringify({ task: formatTask(task) }) }],
+        };
+      } catch (error) {
+        if (error instanceof CustifyApiError) {
+          return {
+            content: [{ type: 'text' as const, text: JSON.stringify({ error: error.code, message: error.message, statusCode: error.statusCode }) }],
+            isError: true,
+          };
+        }
+        throw error;
+      }
+    }
+  );
+
+  // update_task_status
+  server.tool(
+    'update_task_status',
+    'Update only the status of one Custify task by internal task ID. Use this to mark a task as done, mark it as not relevant, or reopen it as open. Use list_tasks first when you need to find the task ID.',
+    {
+      task_id: z.string().describe('The Custify task ID to update. Use list_tasks or get_task to find this ID.'),
+      status: z.enum(['open', 'done', 'not_relevant']).describe('New persisted task status. "not_relevant" maps to Custify API value "not relevant".'),
+    },
+    async (params) => {
+      try {
+        const task = await client.updateTaskStatus(
+          params.task_id,
+          TASK_STATUS_UPDATE_MAP[params.status],
+          { toolName: 'update_task_status', toolCategory: 'tasks' }
+        );
+
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify({
+                success: true,
+                task: formatTask(task),
+              }),
+            },
+          ],
         };
       } catch (error) {
         if (error instanceof CustifyApiError) {

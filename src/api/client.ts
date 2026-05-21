@@ -401,6 +401,18 @@ export class CustifyClient {
     return tasks[0];
   }
 
+  async updateTaskStatus(
+    id: string,
+    status: 'open' | 'done' | 'not relevant',
+    toolMeta?: ToolMeta
+  ): Promise<Task> {
+    return this.request<Task>('PUT', `/task/${encodeURIComponent(id)}`, {
+      body: { status },
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
   async getTaskFilterValues(toolMeta?: ToolMeta): Promise<TaskFilterValues> {
     return this.request<TaskFilterValues>('GET', '/task/filtersAvailableValues', {
       toolName: toolMeta?.toolName,
