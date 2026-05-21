@@ -239,6 +239,7 @@ Supported tag `filterType` values are `is_any_of`, `is_all_of`, `is_none_of`, `i
 |------|------|-------------|
 | `list_tasks` | Read | Query tasks across all accounts with filters and pagination |
 | `get_task` | Read | Get full details for a specific task by ID |
+| `update_task_status` | Write | Mark a task as `open`, `done`, or `not_relevant` |
 | `list_task_filter_values` | Read | Discover assignee, account, and creator IDs (with names) currently used on tasks |
 | `list_tags` | Read | Resolve human-readable tag names to tag IDs. Use `category: "task"` to scope to task labels. |
 
@@ -255,7 +256,7 @@ Supported tag `filterType` values are `is_any_of`, `is_all_of`, `is_none_of`, `i
 | Tasks due in a custom date range | `{"due_after": "2026-04-01", "due_before": "2026-04-30"}` |
 | Tasks assigned to a CSM, sorted by due date | `{"assignee_id": "<user_id>", "sort_by": "dueDate", "sort_direction": "asc"}` |
 
-**Available status values:**
+**Available status filter values:**
 
 | Status | Meaning |
 |--------|---------|
@@ -265,6 +266,8 @@ Supported tag `filterType` values are `is_any_of`, `is_all_of`, `is_none_of`, `i
 | `overdue` | Open and `dueDate` <= yesterday |
 | `on_time` | Open and (no `dueDate` or `dueDate` > yesterday) |
 | `outstanding` | Open and `dueDate` <= today |
+
+**`update_task_status`** only writes persisted task statuses: `open`, `done`, and `not_relevant`. Use `list_tasks` first to find the internal `task_id`, then call `update_task_status` with the new status.
 
 **Available `due` shortcuts:** `past_due`, `today`, `this_week`, `this_month`, `later`. For custom ranges, supply **both** `due_after` and `due_before` (ISO dates). The `due` shortcut and the date-range pair are mutually exclusive — passing only one bound of the range is ignored.
 
@@ -356,6 +359,9 @@ Here are real-world examples of what you can ask your AI assistant once connecte
 
 > **"What's open for Acme Corp?"**
 > Uses `search_accounts` to find the account ID, then `list_tasks` with `account_id` and `status: "open"`.
+
+> **"Mark the onboarding review task as done"**
+> Uses `list_tasks` to find the matching task ID, then `update_task_status` with `status: "done"`. Use `status: "open"` to reopen a task or `status: "not_relevant"` to mark it as not relevant.
 
 ### Querying objectives
 
