@@ -1,6 +1,6 @@
 {
   "name": "@custify/mcp-server",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Custify MCP Server — connect AI tools to your Custify customer success data",
   "main": "dist/index.js",
   "bin": { "custify-mcp-server": "dist/index.js" },

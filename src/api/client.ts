@@ -6,6 +6,7 @@ import type {
   Segment,
   Playbook,
   Lifecycle,
+  Meeting,
   Note,
   Objective,
   Task,
@@ -341,6 +342,44 @@ export class CustifyClient {
   ): Promise<Note> {
     return this.request<Note>('POST', '/note', {
       body: params,
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
+  // Note list methods
+
+  async listNotes(
+    params: { entityId?: string; page?: number; itemsPerPage?: number },
+    toolMeta?: ToolMeta
+  ): Promise<{ total?: number; notes?: Note[] }> {
+    const query: Record<string, string> = {};
+    if (params.page !== undefined) query.page = String(params.page);
+    if (params.itemsPerPage !== undefined) query.itemsPerPage = String(params.itemsPerPage);
+
+    const path = params.entityId ? `/note/${encodeURIComponent(params.entityId)}` : '/note';
+    return this.request<{ total?: number; notes?: Note[] }>('GET', path, {
+      query,
+      toolName: toolMeta?.toolName,
+      toolCategory: toolMeta?.toolCategory,
+    });
+  }
+
+  // Meeting methods
+
+  async listMeetings(
+    params: { companyId?: string; page?: number; itemsPerPage?: number },
+    toolMeta?: ToolMeta
+  ): Promise<{ total?: number; meetings?: Meeting[] }> {
+    const query: Record<string, string> = {};
+    if (params.page !== undefined) query.page = String(params.page);
+    if (params.itemsPerPage !== undefined) query.itemsPerPage = String(params.itemsPerPage);
+
+    const path = params.companyId
+      ? `/calendar/meeting/company/${encodeURIComponent(params.companyId)}`
+      : '/calendar/meeting';
+    return this.request<{ total?: number; meetings?: Meeting[] }>('GET', path, {
+      query,
       toolName: toolMeta?.toolName,
       toolCategory: toolMeta?.toolCategory,
     });
