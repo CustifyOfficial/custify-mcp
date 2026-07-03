@@ -7,6 +7,8 @@ import { registerHealthTools } from './tools/health.js';
 import { registerAlertTools } from './tools/alerts.js';
 import { registerActionTools } from './tools/actions.js';
 import { registerTaskTools } from './tools/tasks.js';
+import { registerNoteTools } from './tools/notes.js';
+import { registerMeetingTools } from './tools/meetings.js';
 import { registerTagTools } from './tools/tags.js';
 import { registerObjectiveTools } from './tools/objectives.js';
 import { registerSegmentsResource } from './resources/segments.js';
@@ -32,6 +34,8 @@ export function createServer(config: Config): McpServer {
   registerAlertTools(server, client);
   registerActionTools(server, client);
   registerTaskTools(server, client);
+  registerNoteTools(server, client);
+  registerMeetingTools(server, client);
   registerTagTools(server, client);
   registerObjectiveTools(server, client);
 

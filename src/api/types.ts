@@ -217,10 +217,50 @@ export interface Objective {
 export interface Note {
   id: string;
   entity: string;
-  entity_model: string;
-  content: string;
-  subject?: string;
-  author?: string;
+  entityModel: string;
+  entityName?: string;
+  text?: string;
+  company?: string[];
+  people?: string[];
+  tags?: string[];
+  files?: string[];
+  sticky?: boolean;
+  status?: string;
+  showInPortal?: boolean;
+  createdBy?: string;
+  createdByType?: string;
+  externalId?: string;
+  externalProvider?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MeetingParticipant {
+  people?: string | null;
+  name?: string | null;
+  email?: string | null;
+  status?: string | null;
+  comment?: string | null;
+  organizer?: boolean;
+  optional?: boolean;
+}
+
+export interface Meeting {
+  id: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  startAt?: string;
+  endAt?: string;
+  duration?: number;
+  recurring?: boolean;
+  direction?: string;
+  organizer?: MeetingParticipant | null;
+  participants?: MeetingParticipant[];
+  company?: string[];
+  people?: string[];
+  tags?: string[];
+  externalId?: string;
   created_at?: string;
   updated_at?: string;
 }
