@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { CustifyClient, CustifyApiError } from '../api/client.js';
 import type { Task, TaskFilter } from '../api/types.js';
+import { stripHtml, truncateText } from './text-utils.js';
 
 // Backend status values: 'open', 'done', 'not relevant', 'overdue', 'on time', 'outstanding'.
 // We expose snake_case to the MCP caller and map to the values the backend understands.
@@ -20,11 +21,32 @@ const TASK_STATUS_UPDATE_MAP = {
   not_relevant: 'not relevant',
 } as const;
 
-function formatTask(t: Task) {
+interface FormatTaskOptions {
+  /** Include the description field at all. Default: false for list, true for get. */
+  includeDescription?: boolean;
+  /** Return description as plain text (HTML stripped). Default: true. */
+  plaintextDescription?: boolean;
+  /** Max characters for description (0 = unlimited). Default: 0. */
+  descriptionMaxChars?: number;
+}
+
+function formatTask(t: Task, opts: FormatTaskOptions = {}) {
+  const includeDescription = opts.includeDescription ?? true;
+  const plaintextDescription = opts.plaintextDescription ?? true;
+  const descriptionMaxChars = opts.descriptionMaxChars ?? 0;
+
+  let description: string | null = null;
+  if (includeDescription && t.description) {
+    description = plaintextDescription ? stripHtml(t.description) : t.description;
+    if (descriptionMaxChars > 0 && description.length > descriptionMaxChars) {
+      description = truncateText(description, descriptionMaxChars);
+    }
+  }
+
   return {
     id: (t.id ?? t._id) ?? null,
     title: t.name ?? null,
-    description: t.description ?? null,
+    ...(includeDescription ? { description } : {}),
     status: t.status ?? null,
     priority: t.priority ?? null,
     due_date: t.dueDate ?? null,
@@ -87,11 +109,11 @@ export function registerTaskTools(server: McpServer, client: CustifyClient): voi
   // list_tasks
   server.tool(
     'list_tasks',
-    `List Custify tasks as queryable objects. Filters can be combined (AND across filters). Common queries:
-- My open tasks due today: {"assignee_id":"<user_id>","status":"open","due":"today"}
-- Overdue tasks for an account: {"account_id":"<account_id>","status":"overdue"}
-- Tagged tasks: {"tag_ids":["<tag_id>"],"status":"open"}
-Use list_tags (with category="task") to resolve tag names to IDs. Use list_task_filter_values to discover assignee, account, and creator IDs currently used on tasks.`,
+    `List Custify tasks. Descriptions are included as plain text by default (HTML stripped). Set include_description=false to omit them for minimal payloads, or use get_task for the full raw HTML of a single task. Filters can be combined (AND). Common queries:
+- My open tasks: {"assignee_id":"<user_id>","status":"open"}
+- Overdue for an account: {"account_id":"<account_id>","status":"overdue"}
+- Compact (no descriptions): {"include_description":false}
+Use list_tags (category="task") to resolve tag names → IDs. Use list_task_filter_values to discover assignee, account, and creator IDs.`,
     {
       assignee_id: z.string().optional().describe('Custify user ID assigned to the task'),
       tag_ids: z.array(z.string()).optional().describe('Filter by tag IDs (matches tasks with ANY of the listed tags)'),
@@ -112,6 +134,15 @@ Use list_tags (with category="task") to resolve tag names to IDs. Use list_task_
       sort_direction: z.enum(['asc', 'desc']).default('asc').optional().describe('Sort direction (default: asc)'),
       limit: z.number().min(1).max(50).default(25).optional().describe('Number of results (1-50, default 25). Backend caps at 50 per page.'),
       offset: z.number().min(0).default(0).optional().describe('Pagination offset (default 0)'),
+      include_description: z.boolean().default(true).optional().describe(
+        'Include task descriptions in the response (as plain text by default). Set false to omit descriptions for minimal payloads. Use get_task for the full raw HTML description of a specific task.'
+      ),
+      plaintext_description: z.boolean().default(true).optional().describe(
+        'When include_description is true, strip HTML tags and return plain text. Default true.'
+      ),
+      description_max_chars: z.number().min(0).default(0).optional().describe(
+        'When include_description is true, truncate descriptions to this many characters (0 = no limit). Truncated descriptions end with "…".'
+      ),
     },
     async (params) => {
       try {
@@ -130,7 +161,12 @@ Use list_tags (with category="task") to resolve tag names to IDs. Use list_task_
           { toolName: 'list_tasks', toolCategory: 'tasks' }
         );
 
-        const tasks = (result.tasks ?? []).map(formatTask);
+        const formatOpts: FormatTaskOptions = {
+          includeDescription: params.include_description ?? true,
+          plaintextDescription: params.plaintext_description ?? true,
+          descriptionMaxChars: params.description_max_chars ?? 0,
+        };
+        const tasks = (result.tasks ?? []).map((t) => formatTask(t, formatOpts));
 
         return {
           content: [
@@ -172,7 +208,7 @@ Use list_tags (with category="task") to resolve tag names to IDs. Use list_task_
           toolCategory: 'tasks',
         });
         return {
-          content: [{ type: 'text' as const, text: JSON.stringify({ task: formatTask(task) }) }],
+          content: [{ type: 'text' as const, text: JSON.stringify({ task: formatTask(task, { includeDescription: true }) }) }],
         };
       } catch (error) {
         if (error instanceof CustifyApiError) {
@@ -208,7 +244,7 @@ Use list_tags (with category="task") to resolve tag names to IDs. Use list_task_
               type: 'text' as const,
               text: JSON.stringify({
                 success: true,
-                task: formatTask(task),
+                task: formatTask(task, { includeDescription: true }),
               }),
             },
           ],
@@ -228,16 +264,47 @@ Use list_tags (with category="task") to resolve tag names to IDs. Use list_task_
   // list_task_filter_values
   server.tool(
     'list_task_filter_values',
-    'Discover IDs that can be used as filters in list_tasks: assignees, creators and companies currently referenced by tasks. Returns names where available. For tag-name → tag-id resolution, use list_tags with category="task" instead — this endpoint returns tag IDs without names.',
-    {},
-    async () => {
+    'Discover IDs that can be used as filters in list_tasks: assignees, creators and companies currently referenced by tasks. Returns names where available. Profile photos are stripped to keep payloads compact. Use the category parameter to request only the category you need. For tag-name → tag-id resolution, use list_tags with category="task" instead — this endpoint returns tag IDs without names.',
+    {
+      category: z.enum(['assignees', 'creators', 'companies', 'collaborators', 'tags']).optional().describe(
+        'Return only one category of filter values. Omit to return all categories.'
+      ),
+    },
+    async (params) => {
       try {
-        const values = await client.getTaskFilterValues({
+        const raw = await client.getTaskFilterValues({
           toolName: 'list_task_filter_values',
           toolCategory: 'tasks',
         });
+
+        // Strip profile_photo data URIs — they are base64 images unusable by LLMs
+        // and inflate the response from ~337k to ~15k characters.
+        const stripPhotos = <T extends Record<string, unknown>>(arr: T[] | undefined): Omit<T, 'profile_photo'>[] | undefined => {
+          if (!arr) return undefined;
+          return arr.map(({ profile_photo, ...rest }) => rest) as Omit<T, 'profile_photo'>[];
+        };
+
+        const cleaned = {
+          company: raw.company,
+          assignedTo: stripPhotos(raw.assignedTo),
+          collaborators: stripPhotos(raw.collaborators),
+          createdBy: raw.createdBy,
+          tags: raw.tags,
+        };
+
+        // If a specific category was requested, return only that.
+        const categoryMap: Record<string, unknown> = {
+          assignees: { assignedTo: cleaned.assignedTo },
+          creators: { createdBy: cleaned.createdBy },
+          companies: { company: cleaned.company },
+          collaborators: { collaborators: cleaned.collaborators },
+          tags: { tags: cleaned.tags },
+        };
+
+        const result = params.category ? categoryMap[params.category] : cleaned;
+
         return {
-          content: [{ type: 'text' as const, text: JSON.stringify(values) }],
+          content: [{ type: 'text' as const, text: JSON.stringify(result) }],
         };
       } catch (error) {
         if (error instanceof CustifyApiError) {
